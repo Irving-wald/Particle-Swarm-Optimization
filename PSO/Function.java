@@ -1,4 +1,4 @@
-package PSO;
+package parallelpso.PSO;
 
 class Function {
 

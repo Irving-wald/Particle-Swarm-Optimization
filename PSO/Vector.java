@@ -1,4 +1,4 @@
-package PSO;
+package parallelpso.PSO;
 
 /**
  * Can represent a position as well as a velocity.
