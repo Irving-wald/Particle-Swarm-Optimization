@@ -1,4 +1,4 @@
-package parallelpso.PSO;
+//package parallelpso.PSO;
 
 import java.util.Random;
 
@@ -11,46 +11,29 @@ class Particle {
     private Vector velocity;
     private Vector bestPosition;    // Personal best solution.
     private double bestEval;        // Personal best value.
-    private FunctionType function;  // The evaluation function to use.
 
     /**
      * Construct a Particle with a random starting position.
      * @param beginRange    the minimum xyz values of the position (inclusive)
      * @param endRange      the maximum xyz values of the position (exclusive)
      */
-    Particle (FunctionType function, int beginRange, int endRange) {
+    Particle ( int beginRange, int endRange, int dimentions) {
         if (beginRange >= endRange) {
             throw new IllegalArgumentException("Begin range must be less than end range.");
         }
-        this.function = function;
-        position = new Vector();
-        velocity = new Vector();
+        position = new Vector(dimentions);
+        velocity = new Vector(dimentions);
         setRandomPosition(beginRange, endRange);
         bestPosition = velocity.clone();
         bestEval = eval();
     }
 
-    /**
-     * The evaluation of the current position.
-     * @return      the evaluation
-     */
-    private double eval () {
-        if (function == FunctionType.FunctionA) {
-            return Function.functionA(position.getX());
-        } else if (function == FunctionType.Ackleys) {
-            return Function.ackleysFunction(position.getX(), position.getY());
-        } else if (function == FunctionType.Booths) {
-            return Function.boothsFunction(position.getX(), position.getY());
-        } else {
-            return Function.threeHumpCamelFunction(position.getX(), position.getY());
-        }
-    }
-
     private void setRandomPosition (int beginRange, int endRange) {
-        int x = rand(beginRange, endRange);
-        int y = rand(beginRange, endRange);
-        int z = rand(beginRange, endRange);
-        position.set(x, y, z);
+        double[] randomVector = new double[position.getVector().length];
+        for(int i = 0; i < randomVector.length; i++) {
+            randomVector[i] = rand(beginRange, endRange);
+        }
+        position.set(randomVector);
     }
 
     /**
@@ -127,6 +110,10 @@ class Particle {
         Ackleys,
         Booths,
         ThreeHumpCamel
+    }
+
+    public double eval() {
+        return Function.function(position.getVector());
     }
 
 }

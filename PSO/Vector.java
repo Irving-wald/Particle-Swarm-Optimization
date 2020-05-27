@@ -1,92 +1,83 @@
-package parallelpso.PSO;
+//package parallelpso.PSO;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Can represent a position as well as a velocity.
  */
 class Vector {
 
-    private double x, y, z;
+    private double[] vector;
     private double limit = Double.MAX_VALUE;
 
-    Vector () {
-        this(0, 0, 0);
+    Vector (int dimentions) {
+        vector = new double[dimentions];
     }
 
-    Vector (double x, double y, double z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+    Vector (double[] other) {
+        vector = other.clone();
     }
 
-    double getX () {
-        return x;
+    double[] getVector() {
+        return vector;
     }
 
-    double getY () {
-        return y;
+    double getElement (int i) {
+        return vector[i];
     }
 
-    double getZ () {
-        return z;
+    void set (double[] other) {
+        vector = other.clone();
     }
 
-    void set (double x, double y, double z) {
-        setX(x);
-        setY(y);
-        setZ(z);
-    }
-
-    private void setX (double x) {
-        this.x = x;
-    }
-
-    private void setY (double y) {
-        this.y = y;
-    }
-
-    private void setZ (double z) {
-        this.z = z;
+    private void set (double x, int i) {
+        vector[i] = x;
     }
 
     void add (Vector v) {
-        x += v.x;
-        y += v.y;
-        z += v.z;
+        for(int i = 0; i < vector.length; i++) {
+            vector[i] += v.getVector()[i];
+        }
         limit();
     }
 
     void sub (Vector v) {
-        x -= v.x;
-        y -= v.y;
-        z -= v.z;
+        for(int i = 0; i < vector.length; i++) {
+            vector[i] -= v.getVector()[i];
+        }
         limit();
     }
 
     void mul (double s) {
-        x *= s;
-        y *= s;
-        z *= s;
+        for(int i = 0; i < vector.length; i++) {
+            vector[i] *= s;
+        }
         limit();
     }
 
     void div (double s) {
-        x /= s;
-        y /= s;
-        z /= s;
+        for(int i = 0; i < vector.length; i++) {
+            vector[i] /= s;
+        }
         limit();
     }
 
-    void normalize () {
+    /* void normalize () {
         double m = mag();
         if (m > 0) {
             x /= m;
             y /= m;
             z /= m;
         }
-    }
+    } */
 
     private double mag () {
-        return Math.sqrt(x*x + y*y);
+        double result = 0;
+        for(int i = 0; i < vector.length - 1; i++) {
+            result += vector[i] * vector[i];
+        }
+        return Math.sqrt(result);
     }
 
     void limit (double l) {
@@ -98,17 +89,22 @@ class Vector {
         double m = mag();
         if (m > limit) {
             double ratio = m / limit;
-            x /= ratio;
-            y /= ratio;
+            for(int i = 0; i < vector.length - 1; i++) {
+                vector[i] /= ratio;
+            }
         }
     }
 
     public Vector clone () {
-        return new Vector(x, y, z);
+        return new Vector(vector);
     }
 
     public String toString () {
-        return "(" + x + ", " + y + ", " + z + ")";
+        String str = "(";
+        for(int i = 0; i < vector.length; i++) {
+            str += vector[i] + (i < vector.length - 1 ? ", " : "");
+        }
+        return str += ")";
     }
 
 }

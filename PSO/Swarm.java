@@ -1,19 +1,19 @@
-package parallelpso.PSO;
+//package parallelpso.PSO;
 
 import java.util.Random;
 
-import parallelpso.PSO.Particle.FunctionType;
+//import parallelpso.PSO.Particle.FunctionType;
 
 /**
  * Represents a swarm of particles from the Particle Swarm Optimization algorithm.
  */
 public class Swarm {
 
+    private int dimentions;
     private int numOfParticles, epochs;
     private double inertia, cognitiveComponent, socialComponent;
     private Vector bestPosition;
     private double bestEval;
-    private FunctionType function; // The function to search.
     public static final double DEFAULT_INERTIA = 0.729844;
     public static final double DEFAULT_COGNITIVE = 1.496180; // Cognitive component.
     public static final double DEFAULT_SOCIAL = 1.496180; // Social component.
@@ -33,8 +33,8 @@ public class Swarm {
      * @param particles     the number of particles to create
      * @param epochs        the number of generations
      */
-    public Swarm (FunctionType function, int particles, int epochs) {
-        this(function, particles, epochs, DEFAULT_INERTIA, DEFAULT_COGNITIVE, DEFAULT_SOCIAL);
+    public Swarm (int particles, int epochs, int dimentions) {
+        this(particles, epochs, DEFAULT_INERTIA, DEFAULT_COGNITIVE, DEFAULT_SOCIAL, dimentions);
     }
 
     /**
@@ -45,15 +45,19 @@ public class Swarm {
      * @param cognitive     the cognitive component or introversion of the particle
      * @param social        the social component or extroversion of the particle
      */
-    public Swarm (FunctionType function, int particles, int epochs, double inertia, double cognitive, double social) {
+    public Swarm (int particles, int epochs, double inertia, double cognitive, double social, int dimentions) {
         this.numOfParticles = particles;
         this.epochs = epochs;
         this.inertia = inertia;
         this.cognitiveComponent = cognitive;
         this.socialComponent = social;
-        this.function = function;
+        this.dimentions = dimentions;
         double infinity = Double.POSITIVE_INFINITY;
-        bestPosition = new Vector(infinity, infinity, infinity);
+        double[] infinityVector = new double[dimentions];
+        for(int i = 0; i < dimentions; i++) {
+            infinityVector[i] = infinity;
+        }
+        bestPosition = new Vector(infinityVector);
         bestEval = Double.POSITIVE_INFINITY;
         beginRange = DEFAULT_BEGIN_RANGE;
         endRange = DEFAULT_END_RANGE;
@@ -64,15 +68,10 @@ public class Swarm {
      */
     public void run () {
         Particle[] particles = initialize();
-
         double oldEval = bestEval;
-        System.out.println("--------------------------EXECUTING-------------------------");
-        System.out.println("Global Best Evaluation (Epoch " + 0 + "):\t"  + bestEval);
-
         for (int i = 0; i < epochs; i++) {
 
             if (bestEval < oldEval) {
-                System.out.println("Global Best Evaluation (Epoch " + (i + 1) + "):\t" + bestEval);
                 oldEval = bestEval;
             }
 
@@ -86,15 +85,9 @@ public class Swarm {
                 p.updatePosition();
             }
         }
-
-        System.out.println("---------------------------RESULT---------------------------");
-        System.out.println("x = " + bestPosition.getX());
-        if (function != FunctionType.FunctionA) {
-            System.out.println("y = " + bestPosition.getY());
-        }
+        System.out.println(bestPosition.toString());
         System.out.println("Final Best Evaluation: " + bestEval);
-        System.out.println("---------------------------COMPLETE-------------------------");
-
+        System.out.println("For function :" + Function.functionToString());
     }
 
     /**
@@ -104,7 +97,7 @@ public class Swarm {
     private Particle[] initialize () {
         Particle[] particles = new Particle[numOfParticles];
         for (int i = 0; i < numOfParticles; i++) {
-            Particle particle = new Particle(function, beginRange, endRange);
+            Particle particle = new Particle(beginRange, endRange, dimentions);
             particles[i] = particle;
             updateGlobalBest(particle);
         }
