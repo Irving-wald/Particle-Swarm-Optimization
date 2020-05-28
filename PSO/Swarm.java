@@ -1,11 +1,18 @@
 //package parallelpso.PSO;
 
+import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 //import parallelpso.PSO.Particle.FunctionType;
 
 /**
- * Represents a swarm of particles from the Particle Swarm Optimization algorithm.
+ * Represents a swarm of particles from the Particle Swarm Optimization
+ * algorithm.
  */
 public class Swarm {
 
@@ -17,12 +24,13 @@ public class Swarm {
     public static final double DEFAULT_INERTIA = 0.729844;
     public static final double DEFAULT_COGNITIVE = 1.496180; // Cognitive component.
     public static final double DEFAULT_SOCIAL = 1.496180; // Social component.
+    ArrayList<Particle> particles;
 
     /**
-     * When Particles are created they are given a random position.
-     * The random position is selected from a specified range.
-     * If the begin range is 0 and the end range is 10 then the
-     * value will be between 0 (inclusive) and 10 (exclusive).
+     * When Particles are created they are given a random position. The random
+     * position is selected from a specified range. If the begin range is 0 and the
+     * end range is 10 then the value will be between 0 (inclusive) and 10
+     * (exclusive).
      */
     private int beginRange, endRange;
     private static final int DEFAULT_BEGIN_RANGE = -100;
@@ -30,23 +38,25 @@ public class Swarm {
 
     /**
      * Construct the Swarm with default values.
-     * @param particles     the number of particles to create
-     * @param epochs        the number of generations
+     * 
+     * @param particles the number of particles to create
+     * @param epochs    the number of generations
      */
-    public Swarm (int particles, int epochs, int dimentions) {
+    public Swarm(int particles, int epochs, int dimentions) {
         this(particles, epochs, DEFAULT_INERTIA, DEFAULT_COGNITIVE, DEFAULT_SOCIAL, dimentions);
     }
 
     /**
      * Construct the Swarm with custom values.
-     * @param particles     the number of particles to create
-     * @param epochs        the number of generations
-     * @param inertia       the particles resistance to change
-     * @param cognitive     the cognitive component or introversion of the particle
-     * @param social        the social component or extroversion of the particle
+     * 
+     * @param particles the number of particles to create
+     * @param epochs    the number of generations
+     * @param inertia   the particles resistance to change
+     * @param cognitive the cognitive component or introversion of the particle
+     * @param social    the social component or extroversion of the particle
      */
-    public Swarm (int particles, int epochs, double inertia, double cognitive, double social, int dimentions) {
-        this.numOfParticles = particles;
+    public Swarm(int noParticles, int epochs, double inertia, double cognitive, double social, int dimentions) {
+        this.numOfParticles = noParticles;
         this.epochs = epochs;
         this.inertia = inertia;
         this.cognitiveComponent = cognitive;
@@ -54,54 +64,147 @@ public class Swarm {
         this.dimentions = dimentions;
         double infinity = Double.POSITIVE_INFINITY;
         double[] infinityVector = new double[dimentions];
-        for(int i = 0; i < dimentions; i++) {
+        for (int i = 0; i < dimentions; i++) {
             infinityVector[i] = infinity;
         }
         bestPosition = new Vector(infinityVector);
         bestEval = Double.POSITIVE_INFINITY;
         beginRange = DEFAULT_BEGIN_RANGE;
         endRange = DEFAULT_END_RANGE;
+
+        particles = initialize();
+    }
+
+    public void reset() {
+        double infinity = Double.POSITIVE_INFINITY;
+        double[] infinityVector = new double[dimentions];
+        for (int i = 0; i < dimentions; i++) {
+            infinityVector[i] = infinity;
+        }
+        bestPosition = new Vector(infinityVector);
+        bestEval = Double.POSITIVE_INFINITY;
+    }
+
+    /**
+     * Execute the algorithm.
+     */
+    public void runConcurrent() {
+        long startTime = System.nanoTime();
+        ArrayList<Particle> cparticles = cloneParticles();
+        double oldEval = bestEval;
+        for (int i = 0; i < epochs; i++) {
+            System.out.println("epoch :" + i);
+            if (bestEval < oldEval) {
+                oldEval = bestEval;
+            }
+
+            try {
+                updateConcurrentParticlesPersonalBestAndGlobal(cparticles);
+                updateParticlesVelocityAndPositions(cparticles);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Final Best Evaluation: " + bestEval);
+        long endTime = System.nanoTime();
+        long timeElapsed = endTime - startTime;
+        System.out.println("runConcurrent time elapsed:   " + timeElapsed / 100000);
+    }
+
+    public void updateConcurrentParticlesPersonalBestAndGlobal(ArrayList<Particle> particles) throws InterruptedException, ExecutionException{
+        ExecutorService pool = Executors.newFixedThreadPool(particles.size());
+        CompletionService<Particle> ecs = new ExecutorCompletionService<Particle>(pool);
+        for(Particle particle: particles) {
+            ecs.submit(new Runnable() {
+
+                @Override
+                public void run() {
+                    particle.updatePersonalBest();
+                }
+                
+            }, particle);
+        }
+        int n = particles.size();
+        for (int i = 0; i < n; ++i) {
+            Particle p = ecs.take().get();
+            if (p != null) {
+                updateGlobalBest(p);
+            }
+        }
+        pool.shutdown();
+    }
+
+    public void updateParticlesVelocityAndPositions(ArrayList<Particle> particles) throws InterruptedException, ExecutionException{
+        ExecutorService pool = Executors.newFixedThreadPool(particles.size());
+        CompletionService<Integer> ecs = new ExecutorCompletionService<Integer>(pool);
+        for(Particle particle: particles) {
+            ecs.submit(new Runnable() {
+
+                @Override
+                public void run() {
+                    updateVelocity(particle);
+                    particle.updatePosition();
+                }
+                
+            }, 0);
+        }
+        int n = particles.size();
+        for (int i = 0; i < n; ++i) {
+            Integer r = ecs.take().get();
+        }
+        pool.shutdown();
     }
 
     /**
      * Execute the algorithm.
      */
     public void run () {
-        Particle[] particles = initialize();
+        long startTime = System.nanoTime();
+        ArrayList<Particle> cparticles = cloneParticles();
         double oldEval = bestEval;
         for (int i = 0; i < epochs; i++) {
+            System.out.println("epoch :" + i);
 
             if (bestEval < oldEval) {
                 oldEval = bestEval;
             }
 
-            for (Particle p : particles) {
+            for (Particle p : cparticles) {
                 p.updatePersonalBest();
                 updateGlobalBest(p);
             }
 
-            for (Particle p : particles) {
+            for (Particle p : cparticles) {
                 updateVelocity(p);
                 p.updatePosition();
             }
         }
-        System.out.println(bestPosition.toString());
         System.out.println("Final Best Evaluation: " + bestEval);
-        System.out.println("For function :" + Function.functionToString());
+        long endTime = System.nanoTime();
+        long timeElapsed = endTime - startTime;
+        System.out.println("runSecuential time elapsed:   " + timeElapsed / 100000);
     }
 
     /**
      * Create a set of particles, each with random starting positions.
      * @return  an array of particles
      */
-    private Particle[] initialize () {
-        Particle[] particles = new Particle[numOfParticles];
+    private ArrayList<Particle> initialize () {
+        ArrayList<Particle> newParticles = new ArrayList<>();
         for (int i = 0; i < numOfParticles; i++) {
             Particle particle = new Particle(beginRange, endRange, dimentions);
-            particles[i] = particle;
+            newParticles.add(particle);
             updateGlobalBest(particle);
         }
-        return particles;
+        return newParticles;
+    }
+
+    private ArrayList<Particle> cloneParticles() {
+        ArrayList<Particle> newParticles = new ArrayList<>();
+        for(Particle p: particles) {
+            newParticles.add(p.clone());
+        }
+        return newParticles;
     }
 
     /**

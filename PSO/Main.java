@@ -3,7 +3,6 @@
 import java.util.Scanner;
 
 public class Main {
-    public static int DIMENTIONS = 1000;
 
     public static void main (String[] args) {
         if (args.length == 1 && args[0].equals("-p")) {
@@ -23,26 +22,29 @@ public class Main {
         Swarm swarm;
         int particles, epochs;
         double inertia, cognitive, social;
-
-        initFunction();
-        particles = getUserInt("Particles: ");
-        epochs = getUserInt("Epochs:    ");
+        int dimentions;
+        particles =     getUserInt("Particles: ");
+        epochs =        getUserInt("Epochs:    ");
+        dimentions =    getUserInt("Dimentions:");
+        initFunction(dimentions);
 
         if (flag) {
             inertia = getUserDouble("Inertia:   ");
             cognitive = getUserDouble("Cognitive: ");
             social = getUserDouble("Social:    ");
-            swarm = new Swarm(particles, epochs, inertia, cognitive, social, DIMENTIONS);
+            swarm = new Swarm(particles, epochs, inertia, cognitive, social, dimentions);
         } else {
-            swarm = new Swarm(particles, epochs, DIMENTIONS);
+            swarm = new Swarm(particles, epochs, dimentions);
 
         }
 
         swarm.run();
+        swarm.reset();
+        swarm.runConcurrent();
     }
 
-    private static void initFunction () {
-        for(int i = 0; i < DIMENTIONS; i++) {
+    private static void initFunction (int dimentions) {
+        for(int i = 0; i < dimentions; i++) {
             Function.polinomial.add(new Monomial());
         }
     }

@@ -28,6 +28,13 @@ class Particle {
         bestEval = eval();
     }
 
+    Particle( Particle other) {
+        position = new Vector( other.position.getVector());
+        velocity = new Vector( other.velocity.getVector());
+        bestPosition = new Vector( other.bestPosition.getVector());
+        bestEval = other.bestEval;
+    }
+
     private void setRandomPosition (int beginRange, int endRange) {
         double[] randomVector = new double[position.getVector().length];
         for(int i = 0; i < randomVector.length; i++) {
@@ -114,6 +121,10 @@ class Particle {
 
     public double eval() {
         return Function.function(position.getVector());
+    }
+
+    public Particle clone() {
+        return new Particle(this);
     }
 
 }
