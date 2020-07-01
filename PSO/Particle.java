@@ -2,6 +2,9 @@
 
 import java.util.Random;
 
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+
 /**
  * Represents a particle from the Particle Swarm Optimization algorithm.
  */
@@ -11,13 +14,14 @@ class Particle {
     private Vector velocity;
     private Vector bestPosition;    // Personal best solution.
     private double bestEval;        // Personal best value.
-
+    public JLabel label;
     /**
      * Construct a Particle with a random starting position.
      * @param beginRange    the minimum xyz values of the position (inclusive)
      * @param endRange      the maximum xyz values of the position (exclusive)
      */
-    Particle ( int beginRange, int endRange, int dimentions) {
+    Particle ( int beginRange, int endRange, int dimentions, JLabel label) {
+        this.label = label;
         if (beginRange >= endRange) {
             throw new IllegalArgumentException("Begin range must be less than end range.");
         }
@@ -28,7 +32,8 @@ class Particle {
         bestEval = eval();
     }
 
-    Particle( Particle other) {
+    Particle( Particle other, JLabel label) {
+        this.label = label;
         position = new Vector( other.position.getVector());
         velocity = new Vector( other.velocity.getVector());
         bestPosition = new Vector( other.bestPosition.getVector());
@@ -123,8 +128,18 @@ class Particle {
         return Function.function(position.getVector());
     }
 
-    public Particle clone() {
-        return new Particle(this);
+    public Particle clone(JLabel label) {
+        return new Particle(this, label);
     }
 
+    public void updateLabelText(String str) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                label.setText(str);
+            }
+
+        });
+    }
 }

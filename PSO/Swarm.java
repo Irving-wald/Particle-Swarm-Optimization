@@ -8,6 +8,9 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+
 //import parallelpso.PSO.Particle.FunctionType;
 
 /**
@@ -25,6 +28,10 @@ public class Swarm {
     public static final double DEFAULT_COGNITIVE = 1.496180; // Cognitive component.
     public static final double DEFAULT_SOCIAL = 1.496180; // Social component.
     ArrayList<Particle> particles;
+    public ArrayList<JLabel> secuentialLabels;
+    public ArrayList<JLabel> concurrentLabels;
+    public JLabel concurrentLabel;
+    public JLabel secuentialLabel;
 
     /**
      * When Particles are created they are given a random position. The random
@@ -43,7 +50,7 @@ public class Swarm {
      * @param epochs    the number of generations
      */
     public Swarm(int particles, int epochs, int dimentions) {
-        this(particles, epochs, DEFAULT_INERTIA, DEFAULT_COGNITIVE, DEFAULT_SOCIAL, dimentions);
+        this(particles, epochs, DEFAULT_INERTIA, DEFAULT_COGNITIVE, DEFAULT_SOCIAL, dimentions, null, null, null, null);
     }
 
     /**
@@ -55,7 +62,11 @@ public class Swarm {
      * @param cognitive the cognitive component or introversion of the particle
      * @param social    the social component or extroversion of the particle
      */
-    public Swarm(int noParticles, int epochs, double inertia, double cognitive, double social, int dimentions) {
+    public Swarm(int noParticles, int epochs, double inertia, double cognitive, double social, int dimentions, ArrayList<JLabel> secuentialLabels, ArrayList<JLabel> concurrentLabels, JLabel secuentialLabel, JLabel concurrentLabel) {
+        this.secuentialLabels = secuentialLabels;
+        this.concurrentLabels = concurrentLabels;
+        this.concurrentLabel = concurrentLabel;
+        this.secuentialLabel = secuentialLabel;
         this.numOfParticles = noParticles;
         this.epochs = epochs;
         this.inertia = inertia;
@@ -90,14 +101,13 @@ public class Swarm {
      */
     public void runConcurrent() {
         long startTime = System.nanoTime();
-        ArrayList<Particle> cparticles = cloneParticles();
+        ArrayList<Particle> cparticles = cloneParticles(concurrentLabels);
         double oldEval = bestEval;
         for (int i = 0; i < epochs; i++) {
-            System.out.println("epoch :" + i);
             if (bestEval < oldEval) {
                 oldEval = bestEval;
             }
-
+            updateLabelText(concurrentLabel,"epoch :" + i + " " + bestEval);
             try {
                 updateConcurrentParticlesPersonalBestAndGlobal(cparticles);
                 updateParticlesVelocityAndPositions(cparticles);
@@ -108,7 +118,8 @@ public class Swarm {
         System.out.println("Final Best Evaluation: " + bestEval);
         long endTime = System.nanoTime();
         long timeElapsed = endTime - startTime;
-        System.out.println("runConcurrent time elapsed:   " + timeElapsed / 100000);
+        System.out.println("runConcurrent time elapsed:   " + timeElapsed );
+        updateLabelText(concurrentLabel, "Tiempo concurrente :" + timeElapsed / 1000000 + "mili - Mejor eval:" + bestEval);
     }
 
     public void updateConcurrentParticlesPersonalBestAndGlobal(ArrayList<Particle> particles) throws InterruptedException, ExecutionException{
@@ -160,15 +171,14 @@ public class Swarm {
      */
     public void run () {
         long startTime = System.nanoTime();
-        ArrayList<Particle> cparticles = cloneParticles();
+        ArrayList<Particle> cparticles = cloneParticles(secuentialLabels);
         double oldEval = bestEval;
         for (int i = 0; i < epochs; i++) {
-            System.out.println("epoch :" + i);
-
+            
             if (bestEval < oldEval) {
                 oldEval = bestEval;
             }
-
+            updateLabelText(secuentialLabel,"epoch :" + i + " " + bestEval);
             for (Particle p : cparticles) {
                 p.updatePersonalBest();
                 updateGlobalBest(p);
@@ -182,7 +192,8 @@ public class Swarm {
         System.out.println("Final Best Evaluation: " + bestEval);
         long endTime = System.nanoTime();
         long timeElapsed = endTime - startTime;
-        System.out.println("runSecuential time elapsed:   " + timeElapsed / 100000);
+        System.out.println("runSecuential time elapsed:   " + timeElapsed );
+        updateLabelText(secuentialLabel, "Tiempo secuencial :" + timeElapsed / 1000000 + "mili - Mejor eval:" + bestEval);
     }
 
     /**
@@ -192,17 +203,17 @@ public class Swarm {
     private ArrayList<Particle> initialize () {
         ArrayList<Particle> newParticles = new ArrayList<>();
         for (int i = 0; i < numOfParticles; i++) {
-            Particle particle = new Particle(beginRange, endRange, dimentions);
+            Particle particle = new Particle(beginRange, endRange, dimentions, null);
             newParticles.add(particle);
             updateGlobalBest(particle);
         }
         return newParticles;
     }
 
-    private ArrayList<Particle> cloneParticles() {
+    private ArrayList<Particle> cloneParticles(ArrayList<JLabel> labels) {
         ArrayList<Particle> newParticles = new ArrayList<>();
-        for(Particle p: particles) {
-            newParticles.add(p.clone());
+        for(int i = 0; i < particles.size(); i++) {
+            newParticles.add(particles.get(i).clone(labels.get(i)));
         }
         return newParticles;
     }
@@ -224,6 +235,7 @@ public class Swarm {
      * @param particle  the particle to update
      */
     private void updateVelocity (Particle particle) {
+        particle.updateLabelText("Ejecutando");
         Vector oldVelocity = particle.getVelocity();
         Vector pBest = particle.getBestPosition();
         Vector gBest = bestPosition.clone();
@@ -250,6 +262,17 @@ public class Swarm {
         newVelocity.add(gBest);
 
         particle.setVelocity(newVelocity);
+        particle.updateLabelText("Finalizado");
     }
 
+    public void updateLabelText(JLabel label, String str) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                label.setText(str);
+            }
+
+        });
+    }
 }
