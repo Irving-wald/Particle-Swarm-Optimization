@@ -14,8 +14,52 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class ServerUI extends JFrame {
+    final int DEFAULT_PARTICLES = 20;
+    final int DEFAULT_EPOCH = 30;
+    final int DEFAULT_DIMENTIONS = 100000;
+
+    private JFrame main;
+    private JPanel buttonsPanel;
+
+    private JPanel particlesPanel;
+    private JLabel particlesLabel;
+    private JTextField particlesTextField;
+
+    private JPanel epochPanel;
+    private JLabel epochLabel;
+    private JTextField epochTextField;
+
+    private JPanel dimentionsPanel;
+    private JLabel dimentionsLabel;
+    private JTextField dimentionsTextField;
+
+    private JPanel inertiaPanel;
+    private JLabel inertiaLabel;
+    private JTextField inertiaTextField;
+
+    private JPanel socialPanel;
+    private JLabel socialLabel;
+    private JTextField socialTextField;
+
+    private JPanel cognitivePanel;
+    private JLabel cognitiveLabel;
+    private JTextField cognitiveTextField;
+
+    private JButton startButton;
+    private JLabel secuentialLabel;
+    private JLabel concurrentLabel;
+
+    private JPanel statusPanel;
+    private JScrollPane secuentialParticlesScrollPane;
+    private JPanel secuentialParticlesStatePanel;
+
+
+    private JScrollPane concurrentParticlesScrollPane;
+    private JPanel concurrentParticlesStatePanel;
+    
 
     /**
      *
@@ -50,9 +94,75 @@ public class ServerUI extends JFrame {
     Thread hiloServer;
 
     private void initializeUI() {
+        particlesTextField = new JTextField(String.valueOf(DEFAULT_PARTICLES));
+        particlesTextField.setPreferredSize(new Dimension(250, 30));
+        particlesPanel = new JPanel(new FlowLayout());
+        particlesLabel = new JLabel("Particulas");
+        particlesLabel.setPreferredSize(new Dimension(250, 30));
+        particlesPanel.add(particlesLabel);
+        particlesPanel.add(particlesTextField);
+        
+        epochTextField = new JTextField(String.valueOf(DEFAULT_EPOCH));
+        epochTextField.setPreferredSize(new Dimension(250, 30));
+        epochPanel = new JPanel(new FlowLayout());
+        epochLabel = new JLabel("Iteraciones");
+        epochLabel.setPreferredSize(new Dimension(250, 30));
+        epochPanel.add(epochLabel);
+        epochPanel.add(epochTextField);
+        
+        dimentionsTextField = new JTextField(String.valueOf(DEFAULT_DIMENTIONS));
+        dimentionsTextField.setPreferredSize(new Dimension(250, 30));
+        dimentionsPanel = new JPanel(new FlowLayout());
+        dimentionsLabel = new JLabel("Dimensiones");
+        dimentionsLabel.setPreferredSize(new Dimension(250, 30));
+        dimentionsPanel.add(dimentionsLabel);
+        dimentionsPanel.add(dimentionsTextField);
+        
+        inertiaTextField = new JTextField(String.valueOf(Swarm.DEFAULT_INERTIA));
+        inertiaTextField.setPreferredSize(new Dimension(250, 30));
+        inertiaPanel = new JPanel(new FlowLayout());
+        inertiaLabel = new JLabel("Inercia");
+        inertiaLabel.setPreferredSize(new Dimension(250, 30));
+        inertiaPanel.add(inertiaLabel);
+        inertiaPanel.add(inertiaTextField);
+        
+        socialTextField = new JTextField(String.valueOf(Swarm.DEFAULT_SOCIAL));
+        socialTextField.setPreferredSize(new Dimension(250, 30));
+        socialPanel = new JPanel(new FlowLayout());
+        socialLabel = new JLabel("Componente social");
+        socialLabel.setPreferredSize(new Dimension(250, 30));
+        socialPanel.add(socialLabel);
+        socialPanel.add(socialTextField);
+        
+        cognitiveTextField = new JTextField(String.valueOf(Swarm.DEFAULT_COGNITIVE));
+        cognitiveTextField.setPreferredSize(new Dimension(250, 30));
+        cognitivePanel = new JPanel(new FlowLayout());
+        cognitiveLabel = new JLabel("Componente cognitivo");
+        cognitiveLabel.setPreferredSize(new Dimension(250, 30));
+        cognitivePanel.add(cognitiveLabel);
+        cognitivePanel.add(cognitiveTextField);
+        
+        startButton = new JButton("Correr");
+
+        startButton.addActionListener(e -> {
+            runSwarm();
+        });
+        
+        buttonsPanel =  new JPanel(new GridLayout(8,1));
+        buttonsPanel.add(particlesPanel);
+        buttonsPanel.add(epochPanel);
+        buttonsPanel.add(dimentionsPanel);
+        buttonsPanel.add(inertiaPanel);
+        buttonsPanel.add(socialPanel);
+        buttonsPanel.add(cognitivePanel);
+        buttonsPanel.add(startButton);
+
+        secuentialParticlesStatePanel = new JPanel(new GridLayout(0, 1));
+        concurrentParticlesStatePanel = new JPanel(new GridLayout(0, 1));
+        /////
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setTitle("Chat server");
-        Dimension dimVentana = new Dimension(500, 300);
+        Dimension dimVentana = new Dimension(800, 1000);
         Dimension dimPantalla = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setSize(dimVentana);
         setLocation(
@@ -82,14 +192,14 @@ public class ServerUI extends JFrame {
         controlsPanel.add(portLabel);
         controlsPanel.add(portField);
         controlsPanel.add(connectButton);
-        
+        buttonsPanel.add(controlsPanel);
 
         consoleTextArea = new JTextArea();
         consoleTextArea.setEditable( false );
         consoleScrollPane = new JScrollPane(consoleTextArea);
 
         getContentPane().setLayout( new BorderLayout());
-        add(controlsPanel, BorderLayout.NORTH);
+        add(buttonsPanel, BorderLayout.NORTH);
         add(consoleScrollPane, BorderLayout.CENTER);
         setVisible(true);
         setResizable(true);
@@ -121,97 +231,54 @@ public class ServerUI extends JFrame {
             consoleTextArea.setText(ex.getMessage() + '\n');
         }
     }
-    /* JLabel lblPuerto;
-    JTextField txtPuerto;
-    JButton btnConectar;
-    JLabel lblConsola;
-    JTextArea txtConsola;
-    ChatServerClass server;
-    Process rmiregistry;
-    Thread hiloServer;
-    
-    private void inicializar() {
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setTitle("Consola del servidor de chat");
-        setResizable(false);
-        Dimension dimVentana = new Dimension(800, 600);
-        Dimension dimPantalla = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-        setSize(dimVentana);
-        setLocation(
-            (dimPantalla.width - dimVentana.width) / 2,
-            (dimPantalla.height - dimVentana.height) / 2
-        );
+    private void runSwarm() {
+        int particles = Integer.valueOf(particlesTextField.getText());
+        int epochs = Integer.valueOf(epochTextField.getText());
+        int dimentions = Integer.valueOf(dimentionsTextField.getText());
+        double inertia = Double.valueOf(inertiaTextField.getText());
+        double cognitive = Double.valueOf(cognitiveTextField.getText());
+        double social = Double.valueOf(socialTextField.getText());
 
-        lblPuerto = new JLabel("Puerto:");
-        Point posLblPuerto = new Point(10, 10);
-        lblPuerto.setLocation(posLblPuerto);
-        lblPuerto.setSize(lblPuerto.getPreferredSize());
+        ArrayList<JLabel> secuentialLabels = generateSecuentialLabels(particles);
+        ArrayList<JLabel> concurrentLabels = generateConcurrentLabels(particles);
+        initFunction(dimentions);
+        Swarm swarm = new Swarm(particles, epochs, inertia, cognitive, social, dimentions, secuentialLabels, concurrentLabels, secuentialLabel, concurrentLabel);
+        swarm.run();
+        swarm.reset();
+        swarm.runConcurrent();
+    }
 
-        txtPuerto = new JTextField("1234");
-        Point posTxtPuerto = nextTo(lblPuerto, 20);
-        txtPuerto.setLocation(posTxtPuerto);
-        txtPuerto.setSize(80, 20);
+    public ArrayList<JLabel> generateSecuentialLabels(int particles) {
+        ArrayList<JLabel> labels = new ArrayList<>();
+        secuentialParticlesStatePanel.removeAll();
+        secuentialParticlesStatePanel.add(secuentialLabel);
+        for(int i = 0; i < particles; i++) {
+            JLabel label = new JLabel();
+            labels.add(label);
+            secuentialParticlesStatePanel.add(label);
+        }
+        secuentialParticlesStatePanel.revalidate();
+        return labels;
+    }
 
-        btnConectar = new JButton("Encender");
-        Point posBtnConectar = nextTo(txtPuerto, 50);
-        btnConectar.setLocation(posBtnConectar);
-        btnConectar.setSize(btnConectar.getPreferredSize());
+    public ArrayList<JLabel> generateConcurrentLabels(int particles) {
+        ArrayList<JLabel> labels = new ArrayList<>();
+        concurrentParticlesStatePanel.removeAll();
+        concurrentParticlesStatePanel.add(concurrentLabel);
+        for(int i = 0; i < particles; i++) {
+            JLabel label = new JLabel("Bloqueado");
+            labels.add(label);
+            concurrentParticlesStatePanel.add(label);
+        }
+        concurrentParticlesStatePanel.revalidate();
+        return labels;
+    }
 
-        lblConsola = new JLabel("Consola:");
-        Point posLblConsola = below(lblPuerto, 50);
-        lblConsola.setLocation(posLblConsola);
-        lblConsola.setSize(lblConsola.getPreferredSize());
-
-        txtConsola = new JTextArea();
-        Point posTxtConsola = below(lblConsola, 20);
-        txtConsola.setLocation(posTxtConsola);
-        txtConsola.setSize(770, 450);
-
-
-        server = null;
-        rmiregistry = null;
-        hiloServer = null;
-        btnConectar.addActionListener(e -> {
-            if(server == null) try {
-
-                server = new ChatServerClass();
-                server.consola = m -> txtConsola.append(m + '\n');
-                rmiregistry = Runtime.getRuntime().exec("rmiregistry " + txtPuerto.getText());
-                Thread.sleep(1000);
-                String dirServer = "//"
-                    + InetAddress.getLocalHost().getHostAddress()
-                    + ":" + txtPuerto.getText() + "/chat";
-                hiloServer = new Thread(server::loopServer);
-                hiloServer.start();
-                Naming.rebind(dirServer, server);
-                txtConsola.setText("Server iniciado en: " + dirServer + '\n');
-                btnConectar.setEnabled(false);
-                
-            } catch(Exception ex) {
-                
-                server = null;
-                if(rmiregistry != null && rmiregistry.isAlive()) rmiregistry.destroy();
-                rmiregistry = null;
-                if(hiloServer != null) hiloServer.interrupt();
-                hiloServer = null;
-                txtConsola.setText(ex.getMessage() + '\n');
-            }
-        });
-
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                if(rmiregistry != null && rmiregistry.isAlive()) rmiregistry.destroy();
-            }
-        });
-
-
-        setLayout(null);
-        add(lblPuerto);
-        add(txtPuerto);
-        add(btnConectar);
-        add(lblConsola);
-        add(txtConsola);
-    } */
+    private static void initFunction (int dimentions) {
+        Function.polinomial = new ArrayList<>();
+        for(int i = 0; i < dimentions; i++) {
+            Function.polinomial.add(new Monomial());
+        }
+    }
 }
